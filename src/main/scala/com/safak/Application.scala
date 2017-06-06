@@ -2,7 +2,6 @@ package com.safak
 
 import kafka.serializer.StringDecoder
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.{SQLContext, SaveMode}
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
@@ -47,11 +46,11 @@ object DataConsumer {
 
     messageStream.foreachRDD(rdd => {
 
-      val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
-
       if (!rdd.isEmpty()) {
-        val df = sqlContext.read.json(rdd.map(_._2))
-        println(df.count)
+        val rdd2 = rdd.map(_._2)
+        println("New Batch")
+        println("Rdd Count: " + rdd2.count())
+        rdd2.collect().foreach(println)
       }
     });
 
@@ -59,13 +58,4 @@ object DataConsumer {
     ssc.awaitTermination()
   }
 
-  /** Lazily instantiated singleton instance of SQLContext */
-  object SQLContextSingleton {
-    @transient private var instance: SQLContext = _
-
-    def getInstance(sparkContext: SparkContext): SQLContext = {
-      if (instance == null) instance = new SQLContext(sparkContext)
-      instance
-    }
-  }
 }
